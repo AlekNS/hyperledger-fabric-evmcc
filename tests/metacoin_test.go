@@ -7,7 +7,7 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	"github.com/JincorTech/hyperledger-fabric-evmcc/burrow/txs"
+	ethvm "github.com/JincorTech/hyperledger-fabric-evmcc/ethvm"
 	"github.com/JincorTech/hyperledger-fabric-evmcc/burrow/word256"
 )
 
@@ -55,13 +55,14 @@ func TestSuccessEvmAdapterMetaCoinTestMethods(t *testing.T) {
 	assert.Equal(t, word256.Int64ToWord256(1).Bytes(), result)
 
 	// Catch events
-	eventData, ok := stub.Events["EVM:LOG:"+contractAcc.Address.Hex()[24:]+":OK"]
+	eventData, ok := stub.Events["EVM:LOG"]
 	require.True(t, ok)
 
-	eventLogVal := txs.EventDataLog{}
+	eventLogVal := ethvm.EvmDataLogEvent{}
 	require.NoError(t, json.Unmarshal(eventData[0], &eventLogVal))
-
-	assert.Equal(t, word256.Int64ToWord256(45).Bytes(), eventLogVal.Data)
+	assert.Empty(t, eventLogVal.Error)
+	assert.Equal(t, contractAcc.Address.Hex()[24:], eventLogVal.ContractAddress)
+	assert.Equal(t, word256.Int64ToWord256(45).Bytes(), eventLogVal.Payload.Data)
 
 	// Call getBalance for user1
 	result, err = CallEvmMethod(stub, ev, contractAcc, 0,

@@ -1,6 +1,7 @@
 package ethvm
 
 import (
+	"strconv"
 	"encoding/json"
 	"fmt"
 
@@ -100,6 +101,12 @@ func (t *EvmAdapter) InstallContractByOwner(code, inputArgs []byte) (*evm.Accoun
 	return t.installContract(ownerAccount, 0, code, inputArgs)
 }
 
+type EvmDataLogEvent struct {
+	ContractAddress string           `json:"address"`
+	Payload         txs.EventDataLog `json:"payload"`
+	Error           string           `json:"error,omit_empty"`
+}
+
 func (t *EvmAdapter) callMethod(caller, contract *evm.Account, transferValue int64, inputArgs []byte) ([]byte, error) {
 	vm, eventSwitch, err := t.newEvm(caller)
 	if err != nil {
@@ -109,11 +116,15 @@ func (t *EvmAdapter) callMethod(caller, contract *evm.Account, transferValue int
 	eventLogID := txs.EventStringLogEvent(contract.Address.Postfix(20))
 	eventSwitch.AddListenerForEvent("evm", eventLogID, func(event events.EventData) {
 		addr := event.(txs.EventDataLog).Address.Hex()[24:]
-		payLoad, err := json.Marshal(event.(txs.EventDataLog))
+		eventData := &EvmDataLogEvent{
+			ContractAddress: addr,
+			Payload:         event.(txs.EventDataLog),
+		}
+		payLoadJson, err := json.Marshal(eventData)
 		if err != nil {
-			t.stub.SetEvent("EVM:LOG:"+addr+":ERROR", []byte(err.Error()))
+			t.stub.SetEvent("EVM:LOG", []byte(fmt.Sprintf(`{"address":"%s","error":%s}`, addr, strconv.Quote(err.Error()))))
 		} else {
-			t.stub.SetEvent("EVM:LOG:"+addr+":OK", payLoad)
+			t.stub.SetEvent("EVM:LOG", payLoadJson)
 		}
 	})
 
