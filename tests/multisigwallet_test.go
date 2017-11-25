@@ -6,7 +6,6 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/require"
 
-	evm "github.com/JincorTech/hyperledger-fabric-evmcc/burrow/evm"
 	"github.com/JincorTech/hyperledger-fabric-evmcc/burrow/word256"
 )
 
@@ -90,8 +89,6 @@ func TestSuccessEvmAdapterMultisigWalletTestMethods(t *testing.T) {
 }
 
 func TestFailEvmAdapterMultisigWalletWrongArgs(t *testing.T) {
-	evm.SetDebug(false)
-
 	stub, state, ev := GetEvmAdapterAndMockStub("msp1", TestUser1ClientCert, TestUser1ClientAddr)
 
 	contractBytecode := LoadBytecodeFromFile("./bin/compilationTests/MultiSigWallet/MultiSigWalletFactory.bin")
